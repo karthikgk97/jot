@@ -50,8 +50,7 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringP("table", "T", "", "The table to write to. Defaults to the one provided in config file.")
-	rootCmd.PersistentFlags().StringP("label", "l", "", "The label for the notes. [Required]")
-	rootCmd.MarkFlagRequired("label")
+	rootCmd.PersistentFlags().StringP("label", "l", "", "The label for the notes. Defaults to the one provided in config file")
 	rootCmd.PersistentFlags().BoolP("high-severity", "s", false, "Boolean for High Severity. Defaults to false")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Show logs")
 
@@ -89,6 +88,9 @@ func createDBIfNotExist(dbPath string) error {
 	return nil
 }
 
+// isTableExist checks if a given table name exists in DB
+//
+// Returns bool, err based on table existence
 func isTableExist(db *sql.DB, tableName string) (bool, error) {
 
 	query := "SELECT name from sqlite_master WHERE type='table' AND name=?"
@@ -104,12 +106,14 @@ func isTableExist(db *sql.DB, tableName string) (bool, error) {
 	return true, nil
 }
 
-/*
-checkTableStatus function based on the configType does the following:
-write: check if table exists, else creates one
-read or clear: check if table exists, else returns an error
-*/
-func checkTableStatus(db *sql.DB, tableName string, configType string) (string, error) {
+// EnsureTableExists ensures that a table exists in the database based on the configType.
+//
+// If configType is "write", it checks if the table exists and creates one if it doesn't.
+//
+// If configType is "read" or "clear", it checks if the table exists and returns an error if it doesn't.
+//
+// Returns the tableName and an error.
+func EnsureTableExists(db *sql.DB, tableName string, configType string) (string, error) {
 	var userConfig *viper.Viper
 	switch configType {
 	case "write":
@@ -127,19 +131,26 @@ func checkTableStatus(db *sql.DB, tableName string, configType string) (string, 
 	}
 
 	// check if file exists, else creating
-	if tableExist, _ := isTableExist(db, tableName); !tableExist {
+	tableExist, err := isTableExist(db, tableName)
+
+	if err != nil {
+		if configType != "write" {
+			return "", err
+		}
+	}
+
+	if !tableExist {
 		if configType == "write" {
 			// creating the table
-			query := `
-CREATE TABLE IF NOT EXISTS {{tableName}} (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+			query := fmt.Sprintf(`
+CREATE TABLE IF NOT EXISTS %s (
+    row_id INTEGER PRIMARY KEY AUTOINCREMENT,
     Label TEXT,
     Content TEXT,
     CreatedAt TIMESTAMP,
     HighSeverity BOOLEAN
 )
-`
-			query = strings.Replace(query, "{{tableName}}", tableName, 1)
+`, tableName)
 			_, err := db.Exec(query)
 
 			if err != nil {
@@ -153,19 +164,17 @@ CREATE TABLE IF NOT EXISTS {{tableName}} (
 	return tableName, nil
 }
 
-
+// insertJotNote inserts the given values to given tableName
 func insertJotNote(db *sql.DB, jotNote JotNote, tableName string) error {
-  query := `
-  INSERT INTO {{tableName}} (Label, Content, CreatedAt, HighSeverity)
-  VALUES (?, ?, ?, ?)
-  `
-  query = strings.Replace(query, "{{tableName}}", tableName, 1)
+	query := fmt.Sprintf(`
+    INSERT INTO %s (Label, Content, CreatedAt, HighSeverity)
+    VALUES (?, ?, ?, ?)
+  `, tableName)
 
-  _, err := db.Exec(query, jotNote.Label, jotNote.Content, jotNote.CreatedAt, jotNote.HighSeverity)
-  
-  return err
+	_, err := db.Exec(query, jotNote.Label, jotNote.Content, jotNote.CreatedAt, jotNote.HighSeverity)
+
+	return err
 }
-
 
 func isInputFromPipe() bool {
 	fileInfo, _ := os.Stdin.Stat()
@@ -191,14 +200,15 @@ func runCommand(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	// processing for Write configuration (default one)
+
 	table, _ := cmd.Flags().GetString("table")
 	label, _ := cmd.Flags().GetString("label")
 	sev, _ := cmd.Flags().GetBool("high-severity")
 
-    if label == "" {
-      fmt.Println("Label is empty, so using default var: 'default'")
-      label = "default"
-    }
+	if label == "" {
+		label = viper.GetString("writeConfig.defaultLabel")
+	}
 
 	var pipeContents string
 	if isInputFromPipe() {
@@ -228,29 +238,28 @@ func runCommand(cmd *cobra.Command, args []string) error {
 
 	dbPath := filepath.Join(homeDir, ".config/jot/jot.db")
 	err := createDBIfNotExist(dbPath)
-
 	if err != nil {
 		return err
 	}
 
 	db, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
 
-    if err != nil {
-      return err  
-  }
-    defer db.Close()
-
-  tableName, tableErr := checkTableStatus(db, table, "write")
-
+	tableName, tableErr := EnsureTableExists(db, table, "write")
 	if tableErr != nil {
 		return tableErr
 	}
 
-  insertErr := insertJotNote(db, jotToWrite, tableName)
+	insertErr := insertJotNote(db, jotToWrite, tableName)
 
-  if insertErr != nil {
-    return insertErr
-  }
+	if insertErr != nil {
+		return insertErr
+	}
 
-    return nil
+	fmt.Println("Jotted!")
+
+	return nil
 }
