@@ -49,12 +49,15 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringP("table", "T", "", "The table to write to. Defaults to the one provided in config file.")
+	rootCmd.PersistentFlags().StringP("table", "t", "", "The table to write to. Defaults to the one provided in config file.")
 	rootCmd.PersistentFlags().StringP("label", "l", "", "The label for the notes. Defaults to the one provided in config file")
-	rootCmd.PersistentFlags().BoolP("high-severity", "s", false, "Boolean for High Severity. Defaults to false")
+	rootCmd.PersistentFlags().BoolP("high", "H", false, "Boolean for High Severity. Defaults to false. There is no --low flag as default is low severity")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Show logs")
 
 	rootCmd.AddCommand(showCmd)
+    rootCmd.AddCommand(clearCmd)
+
+    rootCmd.CompletionOptions.DisableDefaultCmd = true
 	// Set the config file name and file path
 	viper.SetConfigName("config")            // Specify the config file name without extension
 	viper.SetConfigType("yaml")              // Set the type of config file
@@ -98,9 +101,10 @@ func isTableExist(db *sql.DB, tableName string) (bool, error) {
 
 	err := db.QueryRow(query, tableName).Scan(&name)
 
-	if err != sql.ErrNoRows {
-		return false, nil
-	} else if err != nil {
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
 		return false, err
 	}
 	return true, nil
@@ -110,7 +114,7 @@ func isTableExist(db *sql.DB, tableName string) (bool, error) {
 //
 // If configType is "write", it checks if the table exists and creates one if it doesn't.
 //
-// If configType is "read" or "clear", it checks if the table exists and returns an error if it doesn't.
+// If configType is "show" or "clear", it checks if the table exists and returns an error if it doesn't.
 //
 // Returns the tableName and an error.
 func EnsureTableExists(db *sql.DB, tableName string, configType string) (string, error) {
@@ -118,8 +122,8 @@ func EnsureTableExists(db *sql.DB, tableName string, configType string) (string,
 	switch configType {
 	case "write":
 		userConfig = viper.Sub("writeConfig")
-	case "read":
-		userConfig = viper.Sub("readConfig")
+	case "show":
+		userConfig = viper.Sub("showConfig")
 	case "clear":
 		userConfig = viper.Sub("clearConfig")
 	default:
@@ -157,7 +161,7 @@ CREATE TABLE IF NOT EXISTS %s (
 				return "", err
 			}
 		} else {
-			return "", fmt.Errorf("Table %v does not exist. Make sure it exists before performing read or clear operations", tableName)
+			return "", fmt.Errorf("Table %v does not exist. Make sure it exists before performing show or clear operations", tableName)
 		}
 	}
 
@@ -196,7 +200,7 @@ func runCommand(cmd *cobra.Command, args []string) error {
       easy and simple cli to jot down your thoughts.
       use jot --help for more.
 `
-		fmt.Println("\033[33m" + asciiString + "\033[0m")
+		fmt.Println("\033[36m" + asciiString + "\033[0m")
 		return nil
 	}
 
@@ -204,7 +208,7 @@ func runCommand(cmd *cobra.Command, args []string) error {
 
 	table, _ := cmd.Flags().GetString("table")
 	label, _ := cmd.Flags().GetString("label")
-	sev, _ := cmd.Flags().GetBool("high-severity")
+	sev, _ := cmd.Flags().GetBool("high")
 
 	if label == "" {
 		label = viper.GetString("writeConfig.defaultLabel")
