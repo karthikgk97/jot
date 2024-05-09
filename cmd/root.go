@@ -24,10 +24,12 @@ var rootCmd = &cobra.Command{
     cat file.txt | jot "need to look at this file later"
 - For showcasing default note contents:
     jot show
-- You can also pass a filename path for adding to that file
-    jot -f "/root/custom_directory/notes/custom_note.txt
-- The same for "show":
-    jot show -f "/root/custom_directory/notes/custom_note.txt
+- For clearing default note contents:
+    jot clear
+- You can also pass a table name for adding notes to a specific table
+    jot -t custom_table "content to write"
+- The same for "show" or "clear":
+    jot show -t custom_table "content to show"
     `,
 	Args: cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
