@@ -55,6 +55,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Show logs")
 
 	rootCmd.AddCommand(showCmd)
+    rootCmd.AddCommand(clearCmd)
 
     rootCmd.CompletionOptions.DisableDefaultCmd = true
 	// Set the config file name and file path

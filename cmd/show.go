@@ -16,7 +16,7 @@ var showCmd = &cobra.Command{
 	Short: "Show notes",
 	Long: `
   Shows allows you to view notes.
-  Shows the recent N notes.
+  By Default: Shows N notes (oldest or recent notes is based off of decent config).
   N is either the one provided in argument or default var in config`,
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -40,15 +40,15 @@ var (
 )
 
 func init() {
-	showCmd.PersistentFlags().StringVarP(&table, "table", "t", "", "The table to write to. Defaults to the one provided in config file.")
+	showCmd.PersistentFlags().StringVarP(&table, "table", "t", "", "The table to show data from. Defaults to the one provided in config file.")
 	showCmd.PersistentFlags().StringVarP(&label, "label", "l", "", `
     The label for the notes. Defaults to the one provided in config file.
-    For no label filter, pass label='no-label' (Assuming no-label is also not a label passed before
+    For no label filter, pass label='no-label' (Assuming no-label is also not a label passed before)
 `)
 	showCmd.PersistentFlags().Int64VarP(&numNotes, "num-notes", "n", 0, "The number of notes to display. Defaults to the one provided in config file")
 
 	showCmd.PersistentFlags().StringVar(&afterTimeline, "after", "", "The timeline after to get the notes for. In YYYY-MM-DD format")
-	showCmd.PersistentFlags().StringVar(&beforeTimeline, "before", "", "The timeline after to get the notes for. In YYYY-MM-DD format")
+	showCmd.PersistentFlags().StringVar(&beforeTimeline, "before", "", "The timeline before to get the notes for. In YYYY-MM-DD format")
 	showCmd.PersistentFlags().BoolVar(&high, "high", false, "Boolean for High Only Severity. Defaults to false")
 	showCmd.PersistentFlags().BoolVar(&low, "low", false, "Boolean for Low Only Severity. Defaults to false")
 
@@ -56,7 +56,7 @@ func init() {
 	showCmd.PersistentFlags().BoolVar(&showRecent, "recent", false, "Boolean for Showing Recent N notes. Defaults to false")
 }
 
-func queryBuilder(tableName string, viewPreference string) string {
+func showQueryBuilder(tableName string, viewPreference string) string {
 
 	var queryFilter []string
 
@@ -148,7 +148,7 @@ func showJotNote() error {
 		viewPref = viper.GetString("showConfig.defaultViewPreference")
 	}
 
-	queryToExec := queryBuilder(tableName, viewPref)
+	queryToExec := showQueryBuilder(tableName, viewPref)
 
 	rows, err := db.Query(queryToExec)
 
