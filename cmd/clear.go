@@ -44,17 +44,17 @@ func init() {
 	clearCmd.PersistentFlags().StringVarP(&cTable, "table", "t", "", "The table to clear data for. Defaults to the one provided in config file.")
 	clearCmd.PersistentFlags().StringVarP(&cLabel, "label", "l", "", `
     The label for the notes. Defaults to the one provided in config file.
-    For no label filter, pass label='no-label' (Assuming no-label is also not a label passed before)
+    For no label filter, pass label='no-label' (Assuming no-label is also not a label used in notes before)
 `)
 	clearCmd.PersistentFlags().Int64VarP(&cNumNotes, "num-notes", "n", 0, "The number of notes to clear. Defaults to the one provided in config file")
 
-	clearCmd.PersistentFlags().StringVar(&cAfterTimeline, "after", "", "The timeline after to get the notes for. In YYYY-MM-DD format")
-	clearCmd.PersistentFlags().StringVar(&cBeforeTimeline, "before", "", "The timeline before to get the notes for. In YYYY-MM-DD format")
+	clearCmd.PersistentFlags().StringVar(&cAfterTimeline, "after", "", "The timeline after to clear the notes for. In YYYY-MM-DD format")
+	clearCmd.PersistentFlags().StringVar(&cBeforeTimeline, "before", "", "The timeline before to clear the notes for. In YYYY-MM-DD format")
 	clearCmd.PersistentFlags().BoolVar(&cHigh, "high", false, "Boolean for High Only Severity. Defaults to false")
 	clearCmd.PersistentFlags().BoolVar(&cLow, "low", false, "Boolean for Low Only Severity. Defaults to false")
 
-	clearCmd.PersistentFlags().BoolVar(&cShowOldest, "oldest", false, "Boolean for Showing Oldest N notes. Defaults to false")
-	clearCmd.PersistentFlags().BoolVar(&cShowRecent, "recent", false, "Boolean for Showing Recent N notes. Defaults to false")
+	clearCmd.PersistentFlags().BoolVar(&cShowOldest, "oldest", false, "Boolean for Clearing Oldest N notes. Defaults to false")
+	clearCmd.PersistentFlags().BoolVar(&cShowRecent, "recent", false, "Boolean for Clearing Recent N notes. Defaults to false")
 	clearCmd.PersistentFlags().IntVar(&cRowID, "row-id", 0, "Clearing a specific ROW ID. When passed, other filter arguments are not considered")
 }
 
