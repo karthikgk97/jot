@@ -37,6 +37,7 @@ var (
 	cLow            bool
 	cShowOldest     bool
 	cShowRecent     bool
+	cRowID          int
 )
 
 func init() {
@@ -54,10 +55,16 @@ func init() {
 
 	clearCmd.PersistentFlags().BoolVar(&cShowOldest, "oldest", false, "Boolean for Showing Oldest N notes. Defaults to false")
 	clearCmd.PersistentFlags().BoolVar(&cShowRecent, "recent", false, "Boolean for Showing Recent N notes. Defaults to false")
+	clearCmd.PersistentFlags().IntVar(&cRowID, "row-id", 0, "Clearing a specific ROW ID. When passed, other filter arguments are not considered")
 }
 
 func clearQueryBuilder(tableName string, viewPreference string) string {
 	var queryFilter []string
+
+    if cRowID != 0{
+      query := fmt.Sprintf("DELETE FROM %v WHERE row_id = %v", tableName, cRowID)
+      return query
+    }
 
 	if cLabel == "" {
 		cLabel = viper.GetString("clearConfig.defaultLabel")

@@ -104,14 +104,14 @@ func showQueryBuilder(tableName string, viewPreference string) string {
 	}
 
 	var query string
-	query = fmt.Sprintf("SELECT Label, Content, HighSeverity, CreatedAt FROM %v", tableName)
+	query = fmt.Sprintf("SELECT row_id, Label, Content, HighSeverity, CreatedAt FROM %v", tableName)
 
 	if len(queryFilter) > 0 {
 		query += " WHERE " + strings.Join(queryFilter, " AND ")
 	}
 	query += fmt.Sprintf(" ORDER BY CreatedAt %v LIMIT %v", orderBy, numNotes)
 
-	modifiedQuery := "SELECT Label, Content, HighSeverity FROM  (" + query + ") AS  subquery " + "ORDER BY CreatedAt " + revOrderBy
+	modifiedQuery := "SELECT row_id, Label, Content, HighSeverity FROM  (" + query + ") AS  subquery " + "ORDER BY CreatedAt " + revOrderBy
 
 	return modifiedQuery
 }
@@ -157,11 +157,12 @@ func showJotNote() error {
 	}
 
 	for rows.Next() {
+        var rowID int
 		var content string
 		var label string
 		var sev bool
 
-		err := rows.Scan(&label, &content, &sev)
+		err := rows.Scan(&rowID, &label, &content, &sev)
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -175,6 +176,7 @@ func showJotNote() error {
 			}
 
 			var outputString string
+			outputString += fmt.Sprintf("\033[36mRow ID: \033[0m %v \n", rowID)
 			outputString += "\033[36mLabel: \033[0m" + label + "\n"
 			outputString += "\033[36mContent: \033[0m\n\n" + content + "\n"
 			outputString += "\033[36mSeverity: \033[0m" + s + "\n"
