@@ -43,7 +43,7 @@ func init() {
 	showCmd.PersistentFlags().StringVarP(&table, "table", "t", "", "The table to show data from. Defaults to the one provided in config file.")
 	showCmd.PersistentFlags().StringVarP(&label, "label", "l", "", `
     The label for the notes. Defaults to the one provided in config file.
-    For no label filter, pass label='no-label' (Assuming no-label is also not a label passed before)
+    For no label filter, pass label='no-label' (Assuming no-label is also not a label actually used in notes before)
 `)
 	showCmd.PersistentFlags().Int64VarP(&numNotes, "num-notes", "n", 0, "The number of notes to display. Defaults to the one provided in config file")
 
@@ -170,7 +170,7 @@ func showJotNote() error {
 
 			var s string
 			if sev == false {
-				s = "low"
+				s = "\033[32mlow\033[0m"
 			} else {
 				s = "\033[31mhigh\033[0m"
 			}

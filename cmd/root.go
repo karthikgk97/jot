@@ -22,15 +22,14 @@ var rootCmd = &cobra.Command{
     jot "test note"
 - Using pipe to add more content:
     cat file.txt | jot "need to look at this file later"
-- For showcasing default note contents:
-    jot show
-- For clearing default note contents:
-    jot clear
 - You can also pass a table name for adding notes to a specific table
     jot -t custom_table "content to write"
-- The same for "show" or "clear":
-    jot show -t custom_table "content to show"
-    `,
+- Pass a label to group specific notes to specific labels under one table
+    jot -l project1 "fix this project1 bug"
+- You can also use High Severity flag to mark notes as important. By default notes are created with low severity
+    jot -H "fix this crucial bug"
+`,
+
 	Args: cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := runCommand(cmd, args)
