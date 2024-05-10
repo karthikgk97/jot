@@ -57,9 +57,10 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Show logs")
 
 	rootCmd.AddCommand(showCmd)
-    rootCmd.AddCommand(clearCmd)
+	rootCmd.AddCommand(clearCmd)
+	rootCmd.AddCommand(statCmd)
 
-    rootCmd.CompletionOptions.DisableDefaultCmd = true
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	// Set the config file name and file path
 	viper.SetConfigName("config")            // Specify the config file name without extension
 	viper.SetConfigType("yaml")              // Set the type of config file
@@ -163,7 +164,7 @@ CREATE TABLE IF NOT EXISTS %s (
 				return "", err
 			}
 		} else {
-			return "", fmt.Errorf("Table %v does not exist. Make sure it exists before performing show or clear operations", tableName)
+			return "", fmt.Errorf("Table %v does not exist. Make sure it exists before performing show/clear/stats operations", tableName)
 		}
 	}
 
